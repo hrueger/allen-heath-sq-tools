@@ -1,0 +1,22 @@
+{
+  "name": "@allen-heath-sq-tools/tui",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Terminal UI for Allen & Heath SQ consoles",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "tsx src/index.tsx",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@allen-heath-sq-tools/api": "*",
+    "ink": "^7.0.5",
+    "react": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2",
+    "@types/react": "^19.2.17",
+    "tsx": "^4.22.4",
+    "typescript": "^6"
+  }
+}

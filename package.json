@@ -1,0 +1,15 @@
+{
+  "name": "allen-heath-sq-tools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Unofficial tools for Allen & Heath SQ digital mixing consoles",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "build:api": "npm run build --workspace=packages/sq-api",
+    "build:tui": "npm run build --workspace=packages/sq-tui"
+  },
+  "license": "MIT"
+}

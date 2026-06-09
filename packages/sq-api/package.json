@@ -1,0 +1,16 @@
+{
+  "name": "@allen-heath-sq-tools/api",
+  "version": "0.1.0",
+  "description": "Allen & Heath SQ console API for Node.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.20",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.0"
+  }
+}
