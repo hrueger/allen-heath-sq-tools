@@ -16,7 +16,7 @@ const VISIBLE_ROWS = 30;
 
 function formatChannelRow(ch: Channel, i: number): { num: string; name: string; level: string; mute: string; pan: string } {
   const num = String(i + 1).padStart(2, ' ');
-  const name = (ch.name ?? '------').padEnd(6).slice(0, 6);
+  const name = ch.name.padEnd(6).slice(0, 6);
   const db = ch.level;
   const level = (db !== null ? `${formatDb(db)}dB` : '--').padStart(7);
   const mute = ch.muted ? 'M' : '·';
