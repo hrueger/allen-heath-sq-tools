@@ -1,5 +1,9 @@
 # sq-osc
 
+[![release](https://img.shields.io/github/v/release/hrueger/allen-heath-sq-tools?filter=sq-osc-v*&label=release)](https://github.com/hrueger/allen-heath-sq-tools/releases?q=sq-osc-v)
+[![CI](https://github.com/hrueger/allen-heath-sq-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/hrueger/allen-heath-sq-tools/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../../LICENSE)
+
 OSC bridge for Allen & Heath SQ mixing consoles. Exposes every mixer parameter over OSC with full bidirectional support — set values, query current state, and receive live feedback as the mixer changes.
 
 Runs as a single executable with an embedded web UI for configuration. No Node.js, npm, or technical knowledge required to run it.

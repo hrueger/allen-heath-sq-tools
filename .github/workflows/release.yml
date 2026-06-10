@@ -1,0 +1,95 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Build packages
+        run: npm run build --workspaces --if-present
+
+      - name: Create Release PR or Publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: npm run release
+          title: 'chore: version packages'
+          commit: 'chore: version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-deno-binaries:
+    name: Build Deno Binaries
+    needs: release
+    if: needs.release.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Read sq-osc version
+        id: version
+        working-directory: packages/sq-osc
+        run: |
+          VERSION=$(deno eval "import c from './deno.json' with { type: 'json' }; console.log(c.version)")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Compile macOS arm64
+        working-directory: packages/sq-osc
+        run: deno compile --allow-net --allow-run --allow-read --allow-write --allow-env --allow-sys --unstable-sloppy-imports --target=aarch64-apple-darwin --output=../../dist/sq-osc-macos-arm64 src/index.ts
+
+      - name: Compile macOS x64
+        working-directory: packages/sq-osc
+        run: deno compile --allow-net --allow-run --allow-read --allow-write --allow-env --allow-sys --unstable-sloppy-imports --target=x86_64-apple-darwin --output=../../dist/sq-osc-macos-x64 src/index.ts
+
+      - name: Compile Windows
+        working-directory: packages/sq-osc
+        run: deno compile --allow-net --allow-run --allow-read --allow-write --allow-env --allow-sys --unstable-sloppy-imports --target=x86_64-pc-windows-msvc --output=../../dist/sq-osc-windows.exe src/index.ts
+
+      - name: Compile Linux x64
+        working-directory: packages/sq-osc
+        run: deno compile --allow-net --allow-run --allow-read --allow-write --allow-env --allow-sys --unstable-sloppy-imports --target=x86_64-unknown-linux-gnu --output=../../dist/sq-osc-linux-x64 src/index.ts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: sq-osc-v${{ steps.version.outputs.version }}
+          name: sq-osc v${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          files: |
+            dist/sq-osc-macos-arm64
+            dist/sq-osc-macos-x64
+            dist/sq-osc-windows.exe
+            dist/sq-osc-linux-x64
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

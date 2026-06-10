@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  typecheck-and-build:
+    name: Typecheck & Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Build sq-api
+        run: npm run build --workspace=packages/sq-api
+
+      - name: Typecheck sq-api
+        run: npm run typecheck --workspace=packages/sq-api
+
+      - name: Build sq-tui
+        run: npm run build --workspace=packages/sq-tui
+
+      - name: Typecheck sq-tui
+        run: npm run typecheck --workspace=packages/sq-tui
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Typecheck sq-osc
+        working-directory: packages/sq-osc
+        run: deno check src/index.ts

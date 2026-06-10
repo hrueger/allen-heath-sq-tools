@@ -1,5 +1,9 @@
 # @allen-heath-sq-tools/tui
 
+[![npm](https://img.shields.io/npm/v/@allen-heath-sq-tools/tui)](https://www.npmjs.com/package/@allen-heath-sq-tools/tui)
+[![CI](https://github.com/hrueger/allen-heath-sq-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/hrueger/allen-heath-sq-tools/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../../LICENSE)
+
 Terminal UI for Allen & Heath SQ mixing consoles. Built with [Ink](https://github.com/vadimdemedes/ink) (React for the terminal).
 
 ## Usage

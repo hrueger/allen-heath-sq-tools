@@ -1,5 +1,8 @@
 # allen-heath-sq-tools
 
+[![CI](https://github.com/hrueger/allen-heath-sq-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/hrueger/allen-heath-sq-tools/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Unofficial Node.js tools for Allen & Heath SQ digital mixing consoles.
 
 ## Packages

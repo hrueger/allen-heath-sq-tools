@@ -1,5 +1,9 @@
 # @allen-heath-sq-tools/api
 
+[![npm](https://img.shields.io/npm/v/@allen-heath-sq-tools/api)](https://www.npmjs.com/package/@allen-heath-sq-tools/api)
+[![CI](https://github.com/hrueger/allen-heath-sq-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/hrueger/allen-heath-sq-tools/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../../LICENSE)
+
 TypeScript/Node.js API for Allen & Heath SQ digital mixing consoles. Controls the mixer over the network using the same binary protocol as MixPad.
 
 ## Install
