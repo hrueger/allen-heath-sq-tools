@@ -35,6 +35,10 @@
     "typescript": "^6"
   },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hrueger/allen-heath-sq-tools"
+  },
   "publishConfig": {
     "access": "public",
     "provenance": true
