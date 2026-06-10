@@ -62,8 +62,8 @@ export class Channel extends EventEmitter {
   insertEnabled: boolean | null = null;
   /** Last known PAFL (solo) state, null until first DSP update. */
   paflOn: boolean | null = null;
-  /** Channel name as set on the console, null until first state update. */
-  name: string | null = null;
+  /** Channel name as set on the console; defaults to the hardware label (e.g. "Ip1") until a name is received. */
+  name: string;
 
   // PEQ global on/off
   peqOn: boolean | null = null;
@@ -90,10 +90,11 @@ export class Channel extends EventEmitter {
   peqHfQ: number | null = null;
   peqHfShape: number | null = null;  // 0=Peak, 6=Low Shelf, 11=High Pass
 
-  constructor(conn: Connection, b3: number) {
+  constructor(conn: Connection, b3: number, defaultName: string) {
     super();
     this._conn = conn;
     this.b3 = b3;
+    this.name = defaultName;
   }
 
   setLevel(db: number): void {

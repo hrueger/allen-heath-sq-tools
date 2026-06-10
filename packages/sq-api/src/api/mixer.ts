@@ -85,13 +85,13 @@ export class SQMixer extends EventEmitter {
     this.conn = new Connection(opts);
 
     // Build typed collections
-    this.inputs = Array.from({ length: 48 }, (_, i) => new InputChannel(this.conn, i));
-    this.stereoInputs = Array.from({ length: 3 }, (_, i) => new StereoInput(this.conn, 0x30 + i));
-    this.fxReturns = Array.from({ length: 4 }, (_, i) => new FxReturn(this.conn, 0x40 + i));
-    this.buses = Array.from({ length: 12 }, (_, i) => new MixBus(this.conn, 0x58 + i));
+    this.inputs = Array.from({ length: 48 }, (_, i) => new InputChannel(this.conn, i, `Ip${i + 1}`));
+    this.stereoInputs = Array.from({ length: 3 }, (_, i) => new StereoInput(this.conn, 0x30 + i, `St${i + 1}`));
+    this.fxReturns = Array.from({ length: 4 }, (_, i) => new FxReturn(this.conn, 0x40 + i, `FX${i + 1}`));
+    this.buses = Array.from({ length: 12 }, (_, i) => new MixBus(this.conn, 0x58 + i, `Mx${i + 1}`));
     // DCA b3 range 0x37-0x3E — unconfirmed, but avoids b3=0-7 collision with inputs.
-    this.dcas = Array.from({ length: 8 }, (_, i) => new DcaGroup(this.conn, 0x37 + i));
-    this.mainLR = new MainLR(this.conn, 0x68);
+    this.dcas = Array.from({ length: 8 }, (_, i) => new DcaGroup(this.conn, 0x37 + i, `DCA${i + 1}`));
+    this.mainLR = new MainLR(this.conn, 0x68, 'LR');
 
     // Mute groups 1-8 state (null until first update)
     this.muteGroups = Array.from({ length: 8 }, () => null);
