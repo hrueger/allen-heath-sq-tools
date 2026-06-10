@@ -11,7 +11,7 @@ import { DelaySection, DELAY_ROW_COUNT } from '../sections/DelaySection';
 import { PeqSection, PEQ_ROW_COUNT } from '../sections/PeqSection';
 import { RoutingSection, ROUTING_ROW_COUNT } from '../sections/RoutingSection';
 import { SendsSection, SENDS_ROW_COUNT } from '../sections/SendsSection';
-import { levelToDb, formatDb } from '../utils';
+import { formatDb } from '../utils';
 
 const ROW_COUNTS: Record<DetailSection, number> = {
   fader: FADER_ROW_COUNT,
@@ -93,9 +93,9 @@ export const DetailPanel: React.FC<Props> = ({
     );
   }
 
-  const db = channel.level !== null ? levelToDb(channel.level) : null;
+  const db = channel.level;
   const nameStr = channel.name ?? '------';
-  const dbStr = db !== null ? `${db >= 0 ? '+' : ''}${db.toFixed(1)}dB` : '--';
+  const dbStr = db !== null ? `${formatDb(isFinite(db) ? db : -90)}dB` : '--';
 
   const commonProps = (s: DetailSection) => ({
     channel,

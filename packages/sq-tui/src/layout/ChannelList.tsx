@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Text, useInput } from 'ink';
 import { Channel } from '@allen-heath-sq-tools/api';
-import { levelToDb, formatDb, formatPan } from '../utils';
+import { formatDb, formatPan } from '../utils';
 
 interface Props {
   channels: Channel[];
@@ -17,7 +17,7 @@ const VISIBLE_ROWS = 30;
 function formatChannelRow(ch: Channel, i: number): { num: string; name: string; level: string; mute: string; pan: string } {
   const num = String(i + 1).padStart(2, ' ');
   const name = (ch.name ?? '------').padEnd(6).slice(0, 6);
-  const db = ch.level !== null ? levelToDb(ch.level) : null;
+  const db = ch.level;
   const level = (db !== null ? `${formatDb(db)}dB` : '--').padStart(7);
   const mute = ch.muted ? 'M' : '·';
   const pan = (ch.pan !== null ? formatPan(ch.pan) : '?').padStart(4);

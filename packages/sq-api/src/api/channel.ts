@@ -6,7 +6,7 @@ export class Channel extends EventEmitter {
   readonly b3: number;
   protected _conn: Connection;
 
-  /** Last known fader level (raw wire value), null until first DSP update. */
+  /** Last known fader level in dB (−Infinity = off), null until first DSP update. */
   level: number | null = null;
   /** Last known mute state, null until first DSP update. */
   muted: boolean | null = null;
@@ -16,9 +16,9 @@ export class Channel extends EventEmitter {
   gain: number | null = null;
   /** Last known trim in dB, null until first DSP update. */
   trim: number | null = null;
-  /** Send levels to buses (busNumber → value 0-1), null until first DSP update. */
+  /** Send levels to buses (busNumber → dB, −Infinity = off). */
   sends: Map<number, number> = new Map();
-  /** Send levels to FX Returns (fxNumber → value 0-1), null until first DSP update. */
+  /** Send levels to FX Returns (fxNumber → dB, −Infinity = off). */
   fxSends: Map<number, number> = new Map();
   /** Last known HPF on/off state, null until first DSP update. */
   hpfOn: boolean | null = null;
@@ -96,16 +96,14 @@ export class Channel extends EventEmitter {
     this.b3 = b3;
   }
 
-  setLevel(value: number): void {
-    const clamped = conv.clamp(value, 0, 1);
-    const faderValue = Math.round(0x7f9d + (clamped - 0.5) * 0x1000);
+  setLevel(db: number): void {
+    const wire = !isFinite(db) ? 0 : Math.max(0, Math.min(35328, Math.round(0x8000 + db * 256)));
     this._conn.send(Buffer.from([
       0xf7, 0x07, 0x07, 0x0e, this.b3, 0x20,
-      faderValue & 0xff, (faderValue >> 8) & 0xff,
+      wire & 0xff, (wire >> 8) & 0xff,
     ]));
-    // Optimistic update (mixer will send unsolicited DSP if value differs)
-    this.level = faderValue;
-    this.emit("level", faderValue);
+    this.level = db;
+    this.emit("level", db);
   }
 
   setMute(muted: boolean): void {
@@ -152,21 +150,21 @@ export class Channel extends EventEmitter {
     this.emit("trim", dB);
   }
 
-  setSend(busNumber: number, value: number): void {
+  setSend(busNumber: number, db: number): void {
     const busId = 0x10 + (busNumber - 1);
-    const sendValue = conv.sendLevel.toWire(value);
+    const wire = !isFinite(db) ? 0 : Math.max(0, Math.min(35328, Math.round(0x8000 + db * 256)));
     this._conn.send(Buffer.from([
       0xf7, 0x09, 0x07, 0x0e, this.b3, busId,
-      sendValue & 0xff, (sendValue >> 8) & 0xff,
+      wire & 0xff, (wire >> 8) & 0xff,
     ]));
   }
 
-  setSendFx(fxNumber: number, value: number): void {
+  setSendFx(fxNumber: number, db: number): void {
     const fxId = 0x23 + (fxNumber - 1);
-    const sendValue = conv.sendLevel.toWire(value);
+    const wire = !isFinite(db) ? 0 : Math.max(0, Math.min(35328, Math.round(0x8000 + db * 256)));
     this._conn.send(Buffer.from([
       0xf7, 0x09, 0x07, 0x0e, this.b3, fxId,
-      sendValue & 0xff, (sendValue >> 8) & 0xff,
+      wire & 0xff, (wire >> 8) & 0xff,
     ]));
   }
 
@@ -281,14 +279,14 @@ export class Channel extends EventEmitter {
   }
 
   setCompThreshold(dB: number): void {
-    const thresholdValue = conv.compThreshold.toWire(dB);
+    const clamped = conv.clamp(dB, -46, 18);
+    const thresholdValue = conv.compThreshold.toWire(clamped);
     this._conn.send(Buffer.from([
       0xf7, 0x38, 0x13, 0x0e, this.b3, 0x00,
       thresholdValue & 0xff, (thresholdValue >> 8) & 0xff,
     ]));
-    // Optimistic update
-    this.compThreshold = dB;
-    this.emit("comp-threshold", dB);
+    this.compThreshold = clamped;
+    this.emit("comp-threshold", clamped);
   }
 
   setCompRatio(ratio: number): void {
@@ -303,14 +301,14 @@ export class Channel extends EventEmitter {
   }
 
   setCompGain(dB: number): void {
-    const gainValue = conv.compGain.toWire(dB);
+    const clamped = conv.clamp(dB, 0, 18);
+    const gainValue = conv.compGain.toWire(clamped);
     this._conn.send(Buffer.from([
       0xf7, 0x38, 0x13, 0x10, this.b3, 0x00,
       gainValue & 0xff, (gainValue >> 8) & 0xff,
     ]));
-    // Optimistic update
-    this.compGain = dB;
-    this.emit("comp-gain", dB);
+    this.compGain = clamped;
+    this.emit("comp-gain", clamped);
   }
 
   setPadOn(on: boolean): void {
@@ -425,10 +423,10 @@ export class Channel extends EventEmitter {
   }
 
   setPeqLfGain(dB: number): void {
-    const wireVal = conv.compThreshold.toWire(dB);
-    this._setPeqParam(0, 0x0c, wireVal);
-    this.peqLfGain = dB;
-    this.emit("peq-lf-gain", dB);
+    const clamped = conv.clamp(dB, -15, 15);
+    this._setPeqParam(0, 0x0c, conv.compThreshold.toWire(clamped));
+    this.peqLfGain = clamped;
+    this.emit("peq-lf-gain", clamped);
   }
 
   setPeqLfFreq(hz: number): void {
@@ -452,10 +450,10 @@ export class Channel extends EventEmitter {
   }
 
   setPeqLmGain(dB: number): void {
-    const wireVal = conv.compThreshold.toWire(dB);
-    this._setPeqParam(1, 0x10, wireVal);
-    this.peqLmGain = dB;
-    this.emit("peq-lm-gain", dB);
+    const clamped = conv.clamp(dB, -15, 15);
+    this._setPeqParam(1, 0x10, conv.compThreshold.toWire(clamped));
+    this.peqLmGain = clamped;
+    this.emit("peq-lm-gain", clamped);
   }
 
   setPeqLmFreq(hz: number): void {
@@ -473,10 +471,10 @@ export class Channel extends EventEmitter {
   }
 
   setPeqHmGain(dB: number): void {
-    const wireVal = conv.compThreshold.toWire(dB);
-    this._setPeqParam(2, 0x13, wireVal);
-    this.peqHmGain = dB;
-    this.emit("peq-hm-gain", dB);
+    const clamped = conv.clamp(dB, -15, 15);
+    this._setPeqParam(2, 0x13, conv.compThreshold.toWire(clamped));
+    this.peqHmGain = clamped;
+    this.emit("peq-hm-gain", clamped);
   }
 
   setPeqHmFreq(hz: number): void {
@@ -494,10 +492,10 @@ export class Channel extends EventEmitter {
   }
 
   setPeqHfGain(dB: number): void {
-    const wireVal = conv.compThreshold.toWire(dB);
-    this._setPeqParam(3, 0x16, wireVal);
-    this.peqHfGain = dB;
-    this.emit("peq-hf-gain", dB);
+    const clamped = conv.clamp(dB, -15, 15);
+    this._setPeqParam(3, 0x16, conv.compThreshold.toWire(clamped));
+    this.peqHfGain = clamped;
+    this.emit("peq-hf-gain", clamped);
   }
 
   setPeqHfFreq(hz: number): void {
@@ -587,18 +585,18 @@ export class Channel extends EventEmitter {
   /** Called by SQMixer when a DSP frame arrives for this channel's b3 address. */
   _onDsp(register: number, value: number, category?: number, modifier?: number): void {
     if (register === 0x0e && modifier === 0x20) {
-      this.level = value;
-      this.emit("level", value);
+      this.level = value <= 0 ? -Infinity : (value - 0x8000) / 256;
+      this.emit("level", this.level);
     } else if (register === 0x0e && modifier !== undefined && modifier >= 0x10 && modifier <= 0x1b) {
       const busNumber = modifier - 0x10 + 1;
-      const sendValue = conv.sendLevel.fromWire(value);
-      this.sends.set(busNumber, sendValue);
-      this.emit("send", busNumber, sendValue);
+      const db = value <= 0 ? -Infinity : (value - 0x8000) / 256;
+      this.sends.set(busNumber, db);
+      this.emit("send", busNumber, db);
     } else if (register === 0x0e && modifier !== undefined && modifier >= 0x23 && modifier <= 0x26) {
       const fxNumber = modifier - 0x23 + 1;
-      const sendValue = conv.sendLevel.fromWire(value);
-      this.fxSends.set(fxNumber, sendValue);
-      this.emit("send-fx", fxNumber, sendValue);
+      const db = value <= 0 ? -Infinity : (value - 0x8000) / 256;
+      this.fxSends.set(fxNumber, db);
+      this.emit("send-fx", fxNumber, db);
     } else if (register === 0x0c && category === 0x07) {
       this.muted = value !== 0;
       this.emit("mute", this.muted);
@@ -755,12 +753,11 @@ export class FxReturn extends Channel {}
 export class MixBus extends Channel {}
 
 export class DcaGroup extends Channel {
-  override setLevel(value: number): void {
-    const clamped = conv.clamp(value, 0, 1);
-    const faderValue = Math.round(0x7f9d + (clamped - 0.5) * 0x1000);
+  override setLevel(db: number): void {
+    const wire = !isFinite(db) ? 0 : Math.max(0, Math.min(35328, Math.round(0x8000 + db * 256)));
     this._conn.send(Buffer.from([
       0xf7, 0x07, 0x07, 0x1e, this.b3, 0x00,
-      faderValue & 0xff, (faderValue >> 8) & 0xff,
+      wire & 0xff, (wire >> 8) & 0xff,
     ]));
   }
 
@@ -774,8 +771,8 @@ export class DcaGroup extends Channel {
 
   override _onDsp(register: number, value: number, category?: number, modifier?: number): void {
     if (register === 0x1e) {
-      this.level = value;
-      this.emit("level", value);
+      this.level = value <= 0 ? -Infinity : (value - 0x8000) / 256;
+      this.emit("level", this.level);
     } else if (register === 0x1c) {
       this.muted = value !== 0;
       this.emit("mute", this.muted);

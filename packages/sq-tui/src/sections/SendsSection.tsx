@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text, useInput } from 'ink';
-import { faderToDb } from '@allen-heath-sq-tools/api';
+import { dbToFader } from '@allen-heath-sq-tools/api';
 import { SectionHeader } from '../widgets/SectionHeader';
 import { FaderBar } from '../widgets/FaderBar';
 import { SectionProps } from './types';
@@ -9,12 +9,10 @@ import { formatDb, clamp } from '../utils';
 // Rows 0-11: Bus 1-12, Rows 12-15: FX 1-4
 export const SENDS_ROW_COUNT = 16;
 
-const BUS_STEPS = 0.02;
-const FX_STEPS = 0.02;
+const SEND_STEP_DB = 1;
 
-function formatSend(v: number): string {
-  if (v <= 0) return '-∞dB';
-  const db = faderToDb(v);
+function formatSend(db: number): string {
+  if (!isFinite(db)) return '-∞dB';
   return `${formatDb(db)}dB`;
 }
 
@@ -24,7 +22,7 @@ export const SendsSection: React.FC<SectionProps> = ({
   const isEditing = (row: number) => isFocused && editMode && selectedRow === row;
   const isFocRow = (row: number) => isFocused && selectedRow === row;
 
-  const sendRef = React.useRef<number>(0);
+  const sendRef = React.useRef<number>(-Infinity);
 
   useInput((input, key) => {
     if (key.return || input === ' ') onEditModeStart();
@@ -39,7 +37,8 @@ export const SendsSection: React.FC<SectionProps> = ({
     if (key.escape || key.return) { onEditModeEnd(); return; }
     const dir = key.upArrow ? 1 : key.downArrow ? -1 : 0;
     if (dir !== 0) {
-      sendRef.current = clamp(sendRef.current + dir * BUS_STEPS, 0, 1);
+      const cur = isFinite(sendRef.current) ? sendRef.current : -90;
+      sendRef.current = clamp(cur + dir * SEND_STEP_DB, -90, 10);
       if (isBusRow) {
         channel.setSend(busNum, sendRef.current);
       } else {
@@ -50,8 +49,8 @@ export const SendsSection: React.FC<SectionProps> = ({
 
   // Initialize ref when edit starts
   React.useEffect(() => {
-    if (editMode && isBusRow) sendRef.current = channel.sends.get(busNum) ?? 0;
-    if (editMode && !isBusRow) sendRef.current = channel.fxSends.get(fxNum) ?? 0;
+    if (editMode && isBusRow) sendRef.current = channel.sends.get(busNum) ?? -Infinity;
+    if (editMode && !isBusRow) sendRef.current = channel.fxSends.get(fxNum) ?? -Infinity;
   }, [editMode, selectedRow]);
 
   if (!isFocused) {
@@ -66,11 +65,11 @@ export const SendsSection: React.FC<SectionProps> = ({
       {Array.from({ length: 12 }, (_, i) => {
         const bus = i + 1;
         const row = i;
-        const v = channel.sends.get(bus) ?? 0;
+        const v = channel.sends.get(bus) ?? -Infinity;
         return (
           <FaderBar
             key={bus}
-            normalized={v}
+            normalized={dbToFader(v)}
             label={`B${bus}`}
             display={formatSend(v)}
             width={12}
@@ -83,11 +82,11 @@ export const SendsSection: React.FC<SectionProps> = ({
       {Array.from({ length: 4 }, (_, i) => {
         const fx = i + 1;
         const row = i + 12;
-        const v = channel.fxSends.get(fx) ?? 0;
+        const v = channel.fxSends.get(fx) ?? -Infinity;
         return (
           <FaderBar
             key={fx}
-            normalized={v}
+            normalized={dbToFader(v)}
             label={`FX${fx}`}
             display={formatSend(v)}
             width={12}

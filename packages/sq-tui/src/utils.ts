@@ -1,14 +1,8 @@
-import { faderToDb } from '@allen-heath-sq-tools/api';
+import { dbToFader } from '@allen-heath-sq-tools/api';
 
-/** Convert raw wire-level value to dB. ch.level stores wire format. */
-export function levelToDb(wireLevel: number): number {
-  const fader = (wireLevel - 0x7f9d) / 0x1000 + 0.5;
-  return faderToDb(Math.max(0, Math.min(1, fader)));
-}
-
-/** Normalized 0-1 position from wire-level for bar display. */
-export function levelNorm(wireLevel: number): number {
-  return Math.max(0, Math.min(1, (wireLevel - 0x7f9d) / 0x1000 + 0.5));
+/** Normalized 0-1 bar position from dB level (ch.level is already dB). */
+export function levelNorm(db: number): number {
+  return dbToFader(db);
 }
 
 export function formatDb(db: number, decimals = 1): string {
@@ -40,9 +34,9 @@ export function formatRatio(ratio: number): string {
   return Number.isInteger(ratio) ? `${ratio}:1` : `${ratio}:1`;
 }
 
-export function formatSend(send: number): string {
-  if (send <= 0) return '-∞';
-  return formatDb(faderToDb(send));
+export function formatSend(db: number): string {
+  if (!isFinite(db)) return '-∞';
+  return formatDb(db);
 }
 
 /** ASCII bar of given width. */

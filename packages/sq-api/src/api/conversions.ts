@@ -61,13 +61,13 @@ export const sendLevel = {
 // Used for: gate attack, gate release, gate hold, etc.
 // Formula: wire = A * ln(ms) + B where A=2604.3, B=17917
 // Inverse: ms = C * exp(D * wire) where C=0.001029, D=0.0003843
+// Callers are responsible for clamping to their valid range.
 // ============================================================================
 
 export const timeMs = {
   /** Encode time in milliseconds to wire format using exponential curve. */
   toWire(ms: number): number {
-    const clamped = Math.max(0.001, Math.min(32767 / 109.23, ms)); // safe bounds
-    return Math.round(2604.3 * Math.log(clamped) + 17917);
+    return Math.round(2604.3 * Math.log(Math.max(0.001, ms)) + 17917);
   },
 
   /** Decode wire value to time in milliseconds using exponential curve. */
@@ -114,19 +114,19 @@ export const hpfSlope = {
 };
 
 // ============================================================================
-// Compressor threshold (range: -46dB to +18dB, ~56 values per dB)
+// Compressor threshold (range: -46dB to +18dB)
+// Same encoding as all other dB parameters: 256 units/dB, 0x8000 = 0dB
 // ============================================================================
 
 export const compThreshold = {
   /** Encode compressor threshold in dB to wire format. */
-  toWire(dB: number): number {
-    const clamped = clamp(dB, -46, 18);
-    return Math.round(33751 + (clamped + 46) * 56.1875);
+  toWire(db: number): number {
+    return Math.round(0x8000 + db * 256);
   },
 
   /** Decode wire value to compressor threshold in dB. */
   fromWire(wire: number): number {
-    return -46 + (wire - 33751) / 56.1875;
+    return (wire - 0x8000) / 256;
   },
 };
 
@@ -135,18 +135,20 @@ export const compThreshold = {
 // Wire values: 39→1:1, 38→1:1.5, 36→1:2, 35→1:2.5, etc.
 // ============================================================================
 
+// Hardware: wire codes increase with ratio. Range is 1.5:1 to 40:1.
 const COMP_RATIO_MAP = [
-  [39, 1], [38, 1.5], [36, 2], [35, 2.5], [33, 3], [32, 4], [30, 5], [29, 6],
-  [27, 8], [26, 10], [24, 12], [22, 14], [20, 16], [19, 20], [18, 24], [17, 32],
-  [14, 64], [13, 128], [12, 256], [11, Infinity],
+  [11, 1.5], [12, 1.6], [13, 1.7], [14, 1.8], [17, 2.3], [18, 2.5], [19, 2.7], [20, 3],
+  [22, 3.5], [24, 4], [26, 4.5], [27, 4.7], [29, 5.3], [30, 5.5], [32, 6], [33, 7],
+  [35, 10], [36, 12], [38, 20], [39, 40],
 ] as const;
 
 export const compRatio = {
   /** Encode compressor ratio (e.g., 4 for 1:4) to wire code. */
   toWire(ratio: number): number {
-    if (ratio === Infinity) return 11;
-    let bestWire = 39;
-    let bestDiff = Math.abs(1 - ratio);
+    if (ratio >= 40) return 39;
+    if (ratio <= 1.5) return 11;
+    let bestWire = 11;
+    let bestDiff = Math.abs(1.5 - ratio);
     for (const [wire, r] of COMP_RATIO_MAP) {
       const diff = Math.abs(r - ratio);
       if (diff < bestDiff) {
@@ -167,19 +169,19 @@ export const compRatio = {
 };
 
 // ============================================================================
-// Compressor makeup gain (range: 0 to 18dB, ~181 values per dB)
+// Compressor makeup gain (range: 0 to 18dB)
+// Same encoding as all other dB parameters: 256 units/dB, 0x8000 = 0dB
 // ============================================================================
 
 export const compGain = {
   /** Encode compressor makeup gain in dB to wire format. */
-  toWire(dB: number): number {
-    const clamped = clamp(dB, 0, 18);
-    return Math.round(33536 + clamped * 181.333);
+  toWire(db: number): number {
+    return Math.round(0x8000 + db * 256);
   },
 
   /** Decode wire value to compressor makeup gain in dB. */
   fromWire(wire: number): number {
-    return (wire - 33536) / 181.333;
+    return (wire - 0x8000) / 256;
   },
 };
 
@@ -200,19 +202,19 @@ export const padOnOff = {
 };
 
 // ============================================================================
-// Delay duration (0ms–341ms, ~3.02 units per ms, range 5–1035)
+// Delay duration (0ms–341ms, 96 samples per ms at 96kHz, range 0–32736)
 // ============================================================================
 
 export const delayMs = {
   /** Encode delay duration in milliseconds to wire format. */
   toWire(ms: number): number {
     const clamped = clamp(ms, 0, 341);
-    return Math.round(5 + (clamped * 1030) / 341);
+    return Math.round(clamped * 96);
   },
 
   /** Decode wire value to delay duration in milliseconds. */
   fromWire(wire: number): number {
-    return ((wire - 5) * 341) / 1030;
+    return wire / 96;
   },
 };
 
