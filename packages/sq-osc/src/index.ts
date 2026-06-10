@@ -5,7 +5,6 @@ import { OscServer, OscClient } from "./osc.ts";
 import { OscRouter } from "./router.ts";
 import { wireBridge } from "./bridge.ts";
 import { startWebUi } from "./webui/server.ts";
-import { openBrowser } from "./open-browser.ts";
 import type { BridgeStatus } from "./webui/page-status.ts";
 
 let sq: SQMixer | null = null;
@@ -15,7 +14,7 @@ let version: string | null = null;
 let config: BridgeConfig;
 
 const { registry, entries } = buildRegistry();
-const router = new OscRouter(registry);
+let router = new OscRouter(registry);
 
 function getStatus(): BridgeStatus {
   return {
@@ -71,11 +70,16 @@ function restartOsc(cfg: BridgeConfig): void {
   if (oscServer) { try { oscServer.close(); } catch { /* ignore */ } }
   if (oscClient) { try { oscClient.close(); } catch { /* ignore */ } }
 
+  router = new OscRouter(registry, cfg.debug);
   oscClient = new OscClient();
   oscServer = new OscServer(cfg.oscInPort);
 
   oscServer.on("message", (msg, rinfo) => {
     if (!sq) return;
+    if (cfg.debug) {
+      const argStr = msg.args.map((a: number | string) => JSON.stringify(a)).join(" ");
+      console.log(`[osc in]  ${msg.address}${argStr ? " " + argStr : ""} ← ${rinfo.address}:${rinfo.port}`);
+    }
     router.handle(sq, msg.address, msg.args, rinfo);
   });
 
@@ -83,6 +87,7 @@ function restartOsc(cfg: BridgeConfig): void {
 
   console.log(`[osc] listening on port ${cfg.oscInPort}`);
   console.log(`[osc] sending feedback to ${cfg.oscTargetHost ?? "255.255.255.255"}:${cfg.oscOutPort}`);
+  if (cfg.debug) console.log("[osc] debug logging enabled");
 }
 
 async function main(): Promise<void> {
@@ -105,10 +110,6 @@ async function main(): Promise<void> {
 
   restartOsc(config);
   await connectMixer(config);
-
-  if (config.autoOpenBrowser) {
-    setTimeout(() => openBrowser(webUrl), 800);
-  }
 
   // Keep alive and handle shutdown
   Deno.addSignalListener("SIGINT", shutdown);

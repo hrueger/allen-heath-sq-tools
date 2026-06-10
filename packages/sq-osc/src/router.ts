@@ -12,9 +12,11 @@ interface CompiledPattern {
 export class OscRouter {
   private patterns: CompiledPattern[];
   private reply: OscClient;
+  private debug: boolean;
 
-  constructor(registry: OscRegistry) {
+  constructor(registry: OscRegistry, debug = false) {
     this.reply = new OscClient();
+    this.debug = debug;
     this.patterns = [];
 
     for (const [, entry] of registry) {
@@ -45,6 +47,10 @@ export class OscRouter {
         if (!entry.readable || !entry.get) return;
         const values = entry.get(sq, indices);
         if (values !== undefined) {
+          if (this.debug) {
+            const argStr = values.map(a => JSON.stringify(a)).join(" ");
+            console.log(`[osc out] ${address}${argStr ? " " + argStr : ""} → ${rinfo.address}:${rinfo.port}`);
+          }
           this.reply.send(rinfo.address, rinfo.port, address, values);
         }
       } else {

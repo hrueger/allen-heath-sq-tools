@@ -65,6 +65,7 @@ export function startWebUi(
         oscBroadcastAddress: config.oscBroadcastAddress,
         webUiPort: parseInt(params.get("webUiPort") ?? "") || config.webUiPort,
         autoOpenBrowser: config.autoOpenBrowser,
+        debug: config.debug,
       };
       await saveConfig(newConfig);
       onConfigSave(newConfig);

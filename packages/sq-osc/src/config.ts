@@ -9,7 +9,7 @@ export interface BridgeConfig {
   oscTargetHost: string | null;
   oscBroadcastAddress: string;
   webUiPort: number;
-  autoOpenBrowser: boolean;
+  debug: boolean;
 }
 
 export const DEFAULTS: BridgeConfig = {
@@ -19,8 +19,23 @@ export const DEFAULTS: BridgeConfig = {
   oscTargetHost: null,
   oscBroadcastAddress: "255.255.255.255",
   webUiPort: 3000,
-  autoOpenBrowser: true,
+  debug: false,
 };
+
+function printHelp(): void {
+  console.log(`
+Usage: sq-osc-bridge [options]
+
+Options:
+  --mixer-ip   <ip>    IP address of the SQ mixer (default: auto-discover)
+  --osc-in     <port>  UDP port to listen for incoming OSC (default: 8000)
+  --osc-out    <port>  UDP port to send OSC feedback on (default: 9000)
+  --osc-target <host>  Target host for OSC feedback (default: broadcast)
+  --web-port   <port>  Web UI HTTP port (default: 3000)
+  --debug              Log all incoming and outgoing OSC messages
+  --help, -h           Show this help message
+`.trim());
+}
 
 export const CONFIG_DIR = join(homedir(), ".config", "sq-osc");
 export const CONFIG_PATH = join(CONFIG_DIR, "config.json");
@@ -40,6 +55,11 @@ export async function saveConfig(config: BridgeConfig): Promise<void> {
 }
 
 export function applyCliArgs(config: BridgeConfig, args: string[]): BridgeConfig {
+  if (args.includes("--help") || args.includes("-h")) {
+    printHelp();
+    Deno.exit(0);
+  }
+
   const c = { ...config };
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -48,7 +68,7 @@ export function applyCliArgs(config: BridgeConfig, args: string[]): BridgeConfig
     else if (arg === "--osc-out" && args[i + 1]) c.oscOutPort = parseInt(args[++i]);
     else if (arg === "--osc-target" && args[i + 1]) c.oscTargetHost = args[++i];
     else if (arg === "--web-port" && args[i + 1]) c.webUiPort = parseInt(args[++i]);
-    else if (arg === "--no-browser") c.autoOpenBrowser = false;
+    else if (arg === "--debug") c.debug = true;
   }
   return c;
 }

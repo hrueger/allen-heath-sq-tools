@@ -50,9 +50,6 @@ function getChannelCollection(sq: SQMixer, type: ChannelType, n: number): Channe
   }
 }
 
-function wireToNorm(wire: number): number {
-  return Math.max(0, Math.min(1, (wire - 0x779d) / 0x1000));
-}
 
 export function buildChannelEntries(type: ChannelType, prefix: string, count: number): OscEntry[] {
   const cap = CAPS[type];
@@ -84,50 +81,23 @@ export function buildChannelEntries(type: ChannelType, prefix: string, count: nu
   const floatArg = (name: string, desc: string, min?: number, max?: number, unit?: string) =>
     [{ name, type: "f" as const, description: desc, min, max, unit }];
 
-  // fader (normalized 0-1)
+  // fader (dB)
   entries.push({
     address: g("fader"),
-    description: "Fader level (0.0 = off, 1.0 = +10 dB)",
+    description: "Fader level in dB (−90 = off, 0 = unity, +10 = max)",
     group: type,
-    setArgs: floatArg("level", "normalized fader position", 0, 1),
-    getArgs: floatArg("level", "normalized fader position", 0, 1),
+    setArgs: floatArg("db", "fader level in dB", -90, 10, "dB"),
+    getArgs: floatArg("db", "fader level in dB", -90, 10, "dB"),
     readable: true,
     writable: true,
     get: (sq, indices) => {
       const ch = getChannelCollection(sq, type, getN(indices));
-      return ch.level === null ? undefined : [wireToNorm(ch.level)];
+      if (ch.level === null) return undefined;
+      return [isFinite(ch.level) ? ch.level : -90];
     },
     set: (sq, indices, args) => {
-      getChannelCollection(sq, type, getN(indices)).setLevel(args[0] as number);
-    },
-  });
-
-  // fader/db (read-only convenience)
-  entries.push({
-    address: g("fader/db"),
-    description: "Fader level in dB (read-only, query only)",
-    group: type,
-    setArgs: [],
-    getArgs: floatArg("db", "fader level in dB (-90 to +10)"),
-    readable: true,
-    writable: false,
-    get: (sq, indices) => {
-      const ch = getChannelCollection(sq, type, getN(indices));
-      if (ch.level === null) return undefined;
-      const norm = wireToNorm(ch.level);
-      const db = norm <= 0 ? -Infinity : norm < 0.04 ? -Infinity :
-        ((): number => {
-          const points: [number, number][] = [
-            [0.04, -60], [0.16, -40], [0.25, -30], [0.37, -20],
-            [0.5, -10], [0.625, -5], [0.75, 0], [0.875, 5], [1.0, 10],
-          ];
-          for (let i = 1; i < points.length; i++) {
-            const [f0, d0] = points[i - 1], [f1, d1] = points[i];
-            if (norm <= f1) return d0 + ((norm - f0) / (f1 - f0)) * (d1 - d0);
-          }
-          return 10;
-        })();
-      return [isFinite(db) ? db : -90];
+      const db = args[0] as number;
+      getChannelCollection(sq, type, getN(indices)).setLevel(db <= -90 ? -Infinity : db);
     },
   });
 
@@ -545,8 +515,8 @@ export function buildChannelEntries(type: ChannelType, prefix: string, count: nu
             address: g(param),
             description: desc,
             group: type,
-            setArgs: floatArg("db", "gain in dB", -46, 18, "dB"),
-            getArgs: floatArg("db", "gain in dB", -46, 18, "dB"),
+            setArgs: floatArg("db", "gain in dB", -15, 15, "dB"),
+            getArgs: floatArg("db", "gain in dB", -15, 15, "dB"),
             readable: true,
             writable: true,
             get: (sq, indices) => {
@@ -599,19 +569,21 @@ export function buildChannelEntries(type: ChannelType, prefix: string, count: nu
         : `${prefix}/{n}/send/${busNum}`;
       entries.push({
         address: sendAddr,
-        description: `Send level to mix bus ${busNum}`,
+        description: `Send level to mix bus ${busNum} in dB`,
         group: type,
-        setArgs: floatArg("level", "send level (0.0–1.0)", 0, 1),
-        getArgs: floatArg("level", "send level (0.0–1.0)", 0, 1),
+        setArgs: floatArg("db", "send level in dB (−90 = off, 0 = unity, +10 = max)", -90, 10, "dB"),
+        getArgs: floatArg("db", "send level in dB", -90, 10, "dB"),
         readable: true,
         writable: true,
         get: (sq, indices) => {
           const ch = getChannelCollection(sq, type, getN(indices));
           const v = ch.sends.get(busNum);
-          return v === undefined ? undefined : [v];
+          if (v === undefined) return undefined;
+          return [isFinite(v) ? v : -90];
         },
         set: (sq, indices, args) => {
-          getChannelCollection(sq, type, getN(indices)).setSend(busNum, args[0] as number);
+          const db = args[0] as number;
+          getChannelCollection(sq, type, getN(indices)).setSend(busNum, db <= -90 ? -Infinity : db);
         },
       });
     }
@@ -626,19 +598,21 @@ export function buildChannelEntries(type: ChannelType, prefix: string, count: nu
         : `${prefix}/{n}/sendfx/${fxNum}`;
       entries.push({
         address: sendAddr,
-        description: `Send level to FX return ${fxNum}`,
+        description: `Send level to FX return ${fxNum} in dB`,
         group: type,
-        setArgs: floatArg("level", "send level (0.0–1.0)", 0, 1),
-        getArgs: floatArg("level", "send level (0.0–1.0)", 0, 1),
+        setArgs: floatArg("db", "send level in dB (−90 = off, 0 = unity, +10 = max)", -90, 10, "dB"),
+        getArgs: floatArg("db", "send level in dB", -90, 10, "dB"),
         readable: true,
         writable: true,
         get: (sq, indices) => {
           const ch = getChannelCollection(sq, type, getN(indices));
           const v = ch.fxSends.get(fxNum);
-          return v === undefined ? undefined : [v];
+          if (v === undefined) return undefined;
+          return [isFinite(v) ? v : -90];
         },
         set: (sq, indices, args) => {
-          getChannelCollection(sq, type, getN(indices)).setSendFx(fxNum, args[0] as number);
+          const db = args[0] as number;
+          getChannelCollection(sq, type, getN(indices)).setSendFx(fxNum, db <= -90 ? -Infinity : db);
         },
       });
     }

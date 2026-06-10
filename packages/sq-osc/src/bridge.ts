@@ -2,10 +2,6 @@ import type { Channel, SQMixer } from "@allen-heath-sq-tools/api";
 import type { OscClient } from "./osc.ts";
 import type { BridgeConfig } from "./config.ts";
 
-function wireToNorm(wire: number): number {
-  return Math.max(0, Math.min(1, (wire - 0x779d) / 0x1000));
-}
-
 function wireChannelFeedback(
   ch: Channel,
   prefix: string,
@@ -13,6 +9,11 @@ function wireChannelFeedback(
   config: BridgeConfig,
 ): void {
   const bcast = (addr: string, args: Array<number | string>) => {
+    if (config.debug) {
+      const argStr = args.map(a => JSON.stringify(a)).join(" ");
+      const dest = config.oscTargetHost ?? "255.255.255.255";
+      console.log(`[osc out] ${addr}${argStr ? " " + argStr : ""} → ${dest}:${config.oscOutPort}`);
+    }
     if (config.oscTargetHost) {
       client.send(config.oscTargetHost, config.oscOutPort, addr, args);
     } else {
@@ -20,7 +21,7 @@ function wireChannelFeedback(
     }
   };
 
-  ch.on("level", (v: number) => bcast(`${prefix}/fader`, [wireToNorm(v)]));
+  ch.on("level", (v: number) => bcast(`${prefix}/fader`, [v]));
   ch.on("mute",  (v: boolean) => bcast(`${prefix}/mute`, [v ? 1 : 0]));
   ch.on("pan",   (v: number) => bcast(`${prefix}/pan`, [v]));
   ch.on("gain",  (v: number) => bcast(`${prefix}/gain`, [v]));
@@ -88,6 +89,11 @@ export function wireBridge(sq: SQMixer, client: OscClient, config: BridgeConfig)
   wireChannelFeedback(sq.mainLR, "/main", client, config);
 
   const bcast = (addr: string, args: Array<number | string>) => {
+    if (config.debug) {
+      const argStr = args.map(a => JSON.stringify(a)).join(" ");
+      const dest = config.oscTargetHost ?? "255.255.255.255";
+      console.log(`[osc out] ${addr}${argStr ? " " + argStr : ""} → ${dest}:${config.oscOutPort}`);
+    }
     if (config.oscTargetHost) {
       client.send(config.oscTargetHost, config.oscOutPort, addr, args);
     } else {
