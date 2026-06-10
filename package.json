@@ -9,7 +9,10 @@
   "scripts": {
     "build": "npm run build --workspaces",
     "build:api": "npm run build --workspace=packages/sq-api",
-    "build:tui": "npm run build --workspace=packages/sq-tui"
+    "build:tui": "npm run build --workspace=packages/sq-tui",
+    "build:osc": "cd packages/sq-osc && deno task bundle",
+    "build:osc:windows": "cd packages/sq-osc && deno task bundle:windows",
+    "build:osc:linux": "cd packages/sq-osc && deno task bundle:linux"
   },
   "license": "MIT"
 }

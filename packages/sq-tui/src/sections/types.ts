@@ -1,4 +1,4 @@
-import { Channel } from 'sq-sdk';
+import { Channel } from '@allen-heath-sq-tools/api';
 
 export interface SectionProps {
   channel: Channel;

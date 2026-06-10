@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text, useInput } from 'ink';
-import { Channel } from 'sq-sdk';
+import { Channel } from '@allen-heath-sq-tools/api';
 import { FocusZone, DetailSection, SECTION_ORDER } from '../app';
 import { FaderSection, FADER_ROW_COUNT } from '../sections/FaderSection';
 import { PreampSection, PREAMP_ROW_COUNT } from '../sections/PreampSection';

@@ -10,7 +10,7 @@
  *   const level = await sq.inputs[0].getLevel();
  */
 
-import { EventEmitter } from "events";
+import { EventEmitter } from "node:events";
 import { Connection, ConnectOptions, VersionInfo, DspFrame } from "../transport/connection";
 import { encodeFrame, Sub } from "../transport/frame";
 import { discover } from "../transport/discovery";

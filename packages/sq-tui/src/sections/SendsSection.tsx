@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text, useInput } from 'ink';
-import { faderToDb } from 'sq-sdk';
+import { faderToDb } from '@allen-heath-sq-tools/api';
 import { SectionHeader } from '../widgets/SectionHeader';
 import { FaderBar } from '../widgets/FaderBar';
 import { SectionProps } from './types';
@@ -55,7 +55,7 @@ export const SendsSection: React.FC<SectionProps> = ({
   }, [editMode, selectedRow]);
 
   if (!isFocused) {
-    const activeSends = Array.from(channel.sends.entries()).filter(([, v]) => v > 0).length;
+    const activeSends = Array.from(channel.sends.entries()).filter(([, v]: [number, number]) => v > 0).length;
     return <Text dimColor>{`─ SENDS ─── ${activeSends} active bus sends`}</Text>;
   }
 

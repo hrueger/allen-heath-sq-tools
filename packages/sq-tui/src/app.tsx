@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Box, useInput, useApp } from 'ink';
-import { SQMixer, Channel, DspFrame } from 'sq-sdk';
+import { SQMixer, Channel, DspFrame, VersionInfo } from '@allen-heath-sq-tools/api';
 import { Shell } from './layout/Shell';
 import { ChannelList } from './layout/ChannelList';
 import { DetailPanel } from './layout/DetailPanel';
@@ -65,7 +65,7 @@ export const App: React.FC = () => {
     const sq = new SQMixer({ host: HOST });
     sqRef.current = sq;
 
-    sq.connect().then(vi => {
+    sq.connect().then((vi: VersionInfo) => {
       setConnected(true);
       setVersionStr(`fw${vi.fwA}.${vi.fwB}`);
       addEvent(`Connected — SQ fw${vi.fwA}.${vi.fwB}`);

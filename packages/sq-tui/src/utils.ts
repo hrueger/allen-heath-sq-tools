@@ -1,4 +1,4 @@
-import { faderToDb } from 'sq-sdk';
+import { faderToDb } from '@allen-heath-sq-tools/api';
 
 /** Convert raw wire-level value to dB. ch.level stores wire format. */
 export function levelToDb(wireLevel: number): number {

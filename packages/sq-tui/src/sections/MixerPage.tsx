@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Text, useInput } from 'ink';
-import { SQMixer } from 'sq-sdk';
+import { SQMixer } from '@allen-heath-sq-tools/api';
 
 interface Props {
   sq: SQMixer | null;

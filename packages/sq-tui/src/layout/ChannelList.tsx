@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text, useInput } from 'ink';
-import { Channel } from 'sq-sdk';
+import { Channel } from '@allen-heath-sq-tools/api';
 import { levelToDb, formatDb, formatPan } from '../utils';
 
 interface Props {

@@ -2,7 +2,7 @@
  * Parameter — a single mixer value reachable via the SQ network protocol.
  */
 
-import { EventEmitter } from "events";
+import { EventEmitter } from "node:events";
 import { Connection } from "../transport/connection";
 
 export type Unsubscribe = () => void;

@@ -8,6 +8,7 @@ Unofficial Node.js tools for Allen & Heath SQ digital mixing consoles.
 | ---------------------------------------------- | -------------------------------------------------------- |
 | [`@allen-heath-sq-tools/api`](packages/sq-api) | TypeScript API for controlling SQ consoles               |
 | [`@allen-heath-sq-tools/tui`](packages/sq-tui) | Terminal UI for monitoring and controlling an SQ console |
+| [`@allen-heath-sq-tools/osc`](packages/sq-osc) | OSC bridge — exposes all mixer parameters over OSC       |
 
 ## Getting Started
 

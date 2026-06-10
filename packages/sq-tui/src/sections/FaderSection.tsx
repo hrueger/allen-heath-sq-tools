@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text, useInput } from 'ink';
-import { Channel, dbToFader } from 'sq-sdk';
+import { Channel, dbToFader } from '@allen-heath-sq-tools/api';
 import { SectionHeader } from '../widgets/SectionHeader';
 import { FaderBar } from '../widgets/FaderBar';
 import { PanWidget } from '../widgets/PanWidget';

@@ -3,7 +3,7 @@
  * Source: codeBlob/alt/h.java
  */
 
-import * as dgram from "dgram";
+import * as dgram from "node:dgram";
 
 export const DISCOVERY_UDP_PORT = 51320;
 
