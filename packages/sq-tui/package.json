@@ -1,6 +1,6 @@
 {
   "name": "@allen-heath-sq-tools/tui",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Terminal UI for Allen & Heath SQ consoles",
   "main": "./dist/index.js",
